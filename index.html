@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reactietest – PWS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#eef1f6;color:#202536}
+.wrap{width:min(760px,94vw);margin:28px auto}
+.card{background:#fff;border-radius:20px;padding:clamp(20px,4vw,34px);box-shadow:0 8px 28px rgba(24,36,64,.10)}
+.center{text-align:center}
+h1{font-size:clamp(27px,5vw,36px);margin:0 0 10px}
+h2{font-size:21px;margin:26px 0 10px}
+p,li{line-height:1.55}
+.big{font-size:19px;font-weight:700}
+.muted{color:#687084}
+label{display:block;font-weight:700;margin:12px 0 5px}
+input{width:100%;padding:13px;font-size:17px;border:1px solid #cbd1dc;border-radius:10px}
+button{border:0;border-radius:11px;padding:14px 25px;background:#283653;color:white;font-size:17px;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+#game,#results{display:none}
+.info{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.stat{background:#f0f2f7;border-radius:10px;padding:10px 14px;font-weight:700}
+.progress{height:8px;background:#e2e5ec;border-radius:10px;margin:18px 0 25px;overflow:hidden}
+#bar{height:100%;width:0;background:#526b9b;transition:width .12s}
+#stimulus{width:min(270px,62vw);height:min(270px,62vw);border-radius:50%;background:#f1f2f5;margin:26px auto;border:3px solid #d9dde6;transition:background .06s}
+#stimulus.green{background:#25a765;border-color:#16824b}
+#stimulus.red{background:#df4b50;border-color:#b83239}
+.key{display:inline-block;background:#f0f2f7;border:1px solid #d8dce5;border-radius:7px;padding:3px 9px;font-weight:700}
+.good{background:#f3f6fb;border-radius:12px;padding:15px}
+table{width:100%;border-collapse:collapse;margin:14px 0}
+td{padding:10px 7px;border-bottom:1px solid #e0e4eb}
+td:first-child{font-weight:700}
+.small{font-size:13px}
+.notice{background:#fff8e8;border-left:4px solid #d6a33c;padding:12px 14px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section id="start" class="card">
+ <div class="center">
+  <div style="font-size:38px">🧠</div>
+  <h1>Reactietest</h1>
+  <p class="big">Kun jij snel reageren én je reactie op tijd tegenhouden?</p>
+  <p class="muted">Een korte test voor het schoolonderzoek</p>
+ </div>
+ <h2>Instructies</h2>
+ <ul>
+  <li>🟢 <b>Groene cirkel:</b> druk zo snel mogelijk op de <b>spatiebalk</b>.</li>
+  <li>🔴 <b>Rode cirkel:</b> druk juist <b>niet</b> op de spatiebalk.</li>
+  <li>Er zijn maximaal <b>60 rondes</b>. De test duurt meestal enkele minuten.</li>
+ </ul>
+ <p class="notice"><b>Belangrijk:</b> reageer vlot, maar probeer ook nauwkeurig te blijven.</p>
+ <h2>Jouw gegevens</h2>
+ <p class="small muted">Vul hieronder je gegevens in.</p>
+ <label for="name">Naam</label>
+ <input id="name" type="text" placeholder="Bijv. Sam" autocomplete="off">
+ <label for="class">Klas</label>
+ <input id="class" type="text" placeholder="Bijv. 5V2" autocomplete="off">
+ <label for="age">Leeftijd</label>
+ <input id="age" type="number" min="12" max="18" placeholder="12–18">
+ <div class="center" style="margin-top:22px"><button onclick="startTest()">Start de test</button></div>
+</section>
+
+<section id="game" class="card center">
+ <div class="info">
+  <div class="stat">Ronde <span id="round">0</span> / 60</div>
+  <div class="stat">Impulsfouten: <span id="errors">0</span></div>
+ </div>
+ <div class="progress"><div id="bar"></div></div>
+ <div id="stimulus" aria-label="Wacht op het signaal"></div>
+ <p class="big">GROEN = DRUKKEN &nbsp; | &nbsp; ROOD = NIET DRUKKEN</p>
+ <p class="muted">Gebruik de <span class="key">spatiebalk</span>. Wacht op de cirkel.</p>
+</section>
+
+<section id="results" class="card">
+ <div class="center">
+  <h1>Test afgerond!</h1>
+  <p>Bedankt voor het meedoen.</p>
+  <p id="submissionStatus" class="muted">Resultaat wordt verwerkt…</p>
+ </div>
+ <div class="good">
+  <b>Jouw resultaat</b>
+  <table>
+   <tr><td>Naam/code</td><td id="rName"></td></tr>
+   <tr><td>Klas</td><td id="rClass"></td></tr>
+   <tr><td>Leeftijd</td><td id="rAge"></td></tr>
+   <tr><td>Impulsfouten (drukken bij rood)</td><td id="rErrors"></td></tr>
+   <tr><td>Gemiste groene signalen</td><td id="rMisses"></td></tr>
+   <tr><td>Gemiddelde reactietijd op groen</td><td id="rRT"></td></tr>
+   <tr><td>Correct gereageerd op groen</td><td id="rAcc"></td></tr>
+  </table>
+ </div>
+ <p class="muted small">Deze taak meet prestaties op één reactietaak. De uitslag is geen diagnose en meet niet rechtstreeks hersenontwikkeling, risicogedrag of crimineel gedrag.</p>
+ <div class="center" style="margin-top:18px">
+  <button onclick="downloadResult()">Download resultaat</button>
+  <button onclick="location.reload()" style="margin-left:6px">Opnieuw</button>
+ </div>
+</section>
+</div>
+<script>
+/* Vervang deze tekst door de URL van jullie Google Apps Script-webapp. */
+const RESULTS_URL = "https://script.google.com/macros/s/AKfycbzPiPnVAQ8GFB80zYCMD_gm5p6d03wIuPO1Gn4FGipmVFR2hzXGVlXj0epGvQBY83_v/exec";
+const TOTAL = 60;
+let round=0, errors=0, goTrials=0, correctGo=0, reactionTimes=[], rows=[];
+let currentType=null, on=false, startTime=0, stimulusTimer=null, nextTimer=null;
+let participant={name:"",className:"",age:0};
+const stimulus=document.getElementById("stimulus");
+
+function startTest(){
+ participant.name=document.getElementById("name").value.trim();
+ participant.className=document.getElementById("class").value.trim();
+ participant.age=Number(document.getElementById("age").value);
+ if(!participant.name || !participant.className || !Number.isInteger(participant.age) || participant.age<12 || participant.age>18){
+  alert("Vul een naam/deelnemerscode, klas en leeftijd van 12 t/m 18 jaar in.");
+  return;
+ }
+ document.getElementById("start").style.display="none";
+ document.getElementById("game").style.display="block";
+ round=errors=goTrials=correctGo=0; reactionTimes=[]; rows=[];
+ prepare();
+}
+function prepare(){
+ if(round>=TOTAL){finish();return;}
+ round++;
+ document.getElementById("round").textContent=round;
+ document.getElementById("bar").style.width=(round/TOTAL*100)+"%";
+ stimulus.className="";
+ on=false;
+ // Ongeveer 2/3 groene en 1/3 rode signalen.
+ currentType=Math.random()<0.67?"go":"nogo";
+ if(currentType==="go")goTrials++;
+ // Willekeurige wachttijd: korte, middelmatige en langere intervallen.
+ const r=Math.random();
+ let delay = r<0.34 ? 250+Math.random()*250 : r<0.72 ? 500+Math.random()*450 : 950+Math.random()*650;
+ nextTimer=setTimeout(show,delay);
+}
+function show(){
+ stimulus.className=currentType==="go"?"green":"red";
+ on=true;
+ startTime=performance.now();
+ // Wisselende zichtbaarheid maakt de taak uitdagender.
+ const visible=420+Math.random()*480;
+ stimulusTimer=setTimeout(()=>{
+  if(!on)return;
+  on=false;
+  stimulus.className="";
+  rows.push({round,type:currentType,response:"geen",reaction:"",result:currentType==="go"?"gemist":"correct"});
+  nextTimer=setTimeout(prepare,180+Math.random()*260);
+ },visible);
+}
+document.addEventListener("keydown",e=>{
+ if(e.code!=="Space" || document.getElementById("game").style.display!=="block")return;
+ e.preventDefault();
+ if(!on)return;
+ const rt=Math.round(performance.now()-startTime);
+ on=false;
+ clearTimeout(stimulusTimer);
+ stimulus.className="";
+ if(currentType==="go"){
+  correctGo++;
+  reactionTimes.push(rt);
+  rows.push({round,type:"go",response:"spatie",reaction:rt,result:"correct"});
+ }else{
+  errors++;
+  rows.push({round,type:"nogo",response:"spatie",reaction:rt,result:"impulsfout"});
+ }
+ document.getElementById("errors").textContent=errors;
+ nextTimer=setTimeout(prepare,180+Math.random()*260);
+});
+function summary(){
+ const avg=reactionTimes.length?Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length):"";
+ const misses=goTrials-correctGo;
+ const acc=goTrials?Math.round(correctGo/goTrials*100):0;
+ return {avg,misses,acc};
+}
+async function finish(){
+ document.getElementById("game").style.display="none";
+ document.getElementById("results").style.display="block";
+ const s=summary();
+ document.getElementById("rName").textContent=participant.name;
+ document.getElementById("rClass").textContent=participant.className;
+ document.getElementById("rAge").textContent=participant.age;
+ document.getElementById("rErrors").textContent=errors;
+ document.getElementById("rMisses").textContent=s.misses;
+ document.getElementById("rRT").textContent=s.avg===""?"–":s.avg+" ms";
+ document.getElementById("rAcc").textContent=s.acc+"%";
+ await sendResult({
+  naam:participant.name, klas:participant.className, leeftijd:participant.age,
+  rondes:TOTAL, impulsfouten:errors, gemiste_groene_signalen:s.misses,
+  gemiddelde_reactietijd_ms:s.avg, go_nauwkeurigheid_procent:s.acc,
+  timestamp:new Date().toISOString()
+ });
+}
+async function sendResult(data){
+ const status=document.getElementById("submissionStatus");
+ if(RESULTS_URL.startsWith("PLAK_HIER")){
+  status.textContent="De test is afgerond. De automatische koppeling is nog niet ingesteld.";
+  return;
+ }
+ try{
+  await fetch(RESULTS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)});
+  status.textContent="Verzendverzoek verstuurd. Vraag de onderzoekers of je deelname goed is binnengekomen.";
+ }catch(err){
+  status.textContent="Automatisch versturen lukte niet. Download je resultaat en geef het aan de onderzoekers.";
+ }
+}
+function downloadResult(){
+ const s=summary();
+ let csv="Naam;Klas;Leeftijd;Aantal rondes;Impulsfouten;Gemiste groene signalen;Gemiddelde reactietijd (ms);Go-nauwkeurigheid (%)\n";
+ csv += [participant.name,participant.className,participant.age,TOTAL,errors,s.misses,s.avg,s.acc].join(";")+"\n\n";
+ csv+="Ronde;Type;Reactie;Reactietijd (ms);Resultaat\n";
+ rows.forEach(r=>csv += [r.round,r.type,r.response,r.reaction,r.result].join(";")+"\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url;a.download="reactietest-resultaat.csv";a.click();URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
